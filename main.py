@@ -17,7 +17,7 @@ app = FastAPI(
           tags=["Trigger"]
 )
 def trigger_task(background_tasks: BackgroundTasks):
-    from tasks import background_task
+    from tasks import send_balance_alert
     # Trigger the background task
-    background_tasks.add_task(background_task,1,2)
+    background_tasks.add_task(send_balance_alert)
     return {"message": "Task triggered successfully!"}

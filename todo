@@ -1,0 +1,9 @@
+
+
+Items left to be done:
+
+
+1. Test the facebook API Service using a valid developer credentials and ad account id.
+2. Fix the bug with the periodic task not getting registered to the celery beat scheduler.
+3. Setup Celery monitoring (Flower UI) to monitor the celery tasks.
+4. Implement the notification channel service like smtp email service 
