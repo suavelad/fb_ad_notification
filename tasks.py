@@ -47,11 +47,3 @@ def send_balance_alert():
         else:
             send_notification_alert(balance_log, ad_account, balance)
     return "Alert Sent"
-
-
-
-@celery_app.task(name='testing')
-def background_task(arg1, arg2):
-    # Perform some background task here
-    result = arg1 + arg2
-    return result
