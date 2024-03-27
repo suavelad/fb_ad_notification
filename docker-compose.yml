@@ -1,0 +1,107 @@
+version: '3'
+
+services:
+  notify_app:
+    image: notify_app
+    container_name: notify_app
+    build: 
+      context: .
+    restart: always
+    command: uvicorn main:app --port 8002 --reload --host 0.0.0.0
+    volumes:
+      - .:/home
+    ports:
+      - 8002:8002
+    expose:
+      - 8002
+    depends_on:
+      - notify_redis
+    networks:
+      - notify_network
+  
+  notify_celery_worker:
+    container_name: notify_celery_worker
+    build:
+      context: .
+    command: celery -A celery worker --loglevel=DEBUG 
+    volumes:
+      - .:/home
+    environment:
+      - CELERY_BROKER_URL=${REDIS_URL}
+      - CELERY_RESULT_BACKEND=${REDIS_URL}
+    depends_on:
+      - notify_app
+      - notify_redis
+    networks:
+      - notify_network
+    
+
+  notify_celery_beat:
+    container_name: notify_celery_beat
+    build:
+      context: .
+    command: celery -A celery beat --loglevel=DEBUG 
+    volumes:
+      - .:/home
+    environment:
+      - CELERY_BROKER_URL=${REDIS_URL}
+      - CELERY_RESULT_BACKEND=${REDIS_URL}
+    depends_on:
+      - notify_celery_worker
+    networks:
+      - notify_network
+
+
+  notify_redis:
+      container_name: notify_redis
+      image: 'bitnami/redis:latest'
+      environment:
+        - ALLOW_EMPTY_PASSWORD=yes    # I am using this because it is not production
+      ports:
+        - 6379:6379
+      networks:
+        - notify_network
+      
+  notify_flower:
+    container_name: notify_flower
+    build: .
+    command: celery -A celery flower --port=5555
+    environment:
+      - CELERY_BROKER_URL=${REDIS_URL}
+      - CELERY_RESULT_BACKEND=${REDIS_URL}
+    ports:
+      - 5555:5555
+    depends_on:
+      - notify_app
+      - notify_redis
+      - notify_celery_worker
+    
+    expose:
+      - 5555
+    
+    networks:
+        - notify_network
+
+      
+  notify_db:
+    image: postgres:12-alpine
+    container_name: notify_db
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    expose:
+      - ${POSTGRES_PORT}
+    networks:
+      - notify_network
+
+    
+
+networks:
+  notify_network:
+    driver: bridge
