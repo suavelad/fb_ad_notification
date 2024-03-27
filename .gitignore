@@ -2,3 +2,9 @@
 env/
 /env/
 info.txt
+__pycache__/
+settings/__pycache__/
+services/__pycache__/
+
+
+
